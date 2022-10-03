@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>OfryHome</title>
+  </head>
+  <body>
+
+  <style>
+
+    .btn{
+      border-radius: 5px;
+      font-size: 30px;
+      width: 20rem;
+    }
+    .btn-on{
+      background-color: yellow;
+    }
+    .btn-off{
+
+    }
+    .buttns-container{
+      border-width: medium;
+    }
+    .controler{
+      display: inline-block;
+      margin: 7px;
+    }
+
+  </style>
+
+  <div class="buttns-container">
+    <h2>Living Room</h2>
+    <p><a href='/light/on\'><button class='btn btn-off'>Light</button></a></p>
+    <p><a href='/3/on\'><button class='btn btn-off'>Room Light</button></a></p>
+    <p><a href='/4/on\'><button class='btn btn-off'>Fan</button></a></p>
+
+    <h2>Plants</h2>
+    <p><a href='/3/on\'><button class='btn btn-on'>Water Pump</button></a></p>
+    <div class="pump-info">
+      <div class="controler">
+        <p>Freq. :</p> <a href="/3/inc/freq\"><button type="btn" name="button">+</button></a> <p>1 times a day</p> <a href="/3/dec/freq\"><button type="btn" name="button">-</button></a>
+      </div>
+      <div class="controler">
+        <p>Pump time : </p> <a href="/3/inc/pumptime\"><button type="btn" name="button">+</button></a> <p>5 seconds</p> <a href="/3/dec/pumptime\"><button type="btn" name="button">-</button></a>
+      </div>
+    </div>
+
+
+
+
+  </div>
+
+
+
+
+  </body>
+</html>

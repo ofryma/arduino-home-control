@@ -1,0 +1,15 @@
+body{
+  font-size: 20px;
+}
+
+.buttns-container{
+  border-width: medium;
+}
+
+.btn{
+  border-radius: 5px;
+}
+
+.btn-on{
+  background-color: yellow;
+}
