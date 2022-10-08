@@ -1,6 +1,6 @@
+#include <Arduino_JSON.h>
 #include <ESP8266WiFi.h>
-
-
+#include <ESP8266HTTPClient.h>
 
 #define DONT_TOUCH_PIN 11
 
@@ -34,25 +34,94 @@ unsigned long previousTime = 0;
 const long timeoutTime = 2000;
 
 
+String http_get_request(String endpoint , String route ,WiFiClient open_client);
+
+struct TimeStamp{
+
+};
+
+
+
 struct Button{
   String name;
   String route;
   String state;
   int output_pin;
-  String HTML;
-} Light1;
+  String ToggleButtonElement(Button* btn) {
 
+
+  String btn_next_state = "";
+  if (header.indexOf("GET /" + (*btn).route + "/on" ) >= 0) {
+    (*btn).state = "on";
+    digitalWrite((*btn).output_pin, HIGH);
+
+  }
+  else if (header.indexOf("GET /" + (*btn).route + "/off" ) >= 0) {
+    (*btn).state = "off";
+    digitalWrite((*btn).output_pin, LOW);
+  }
+
+  if ((*btn).state == "on") {
+    btn_next_state = "off";
+  }
+  else {
+    btn_next_state = "on";
+  }
+
+  return "<p><a href='/" + (*btn).route + "/" + btn_next_state + "'><button class='btn general-text btn-" + (*btn).state + "'>" + (*btn).name + "</button></a></p>";
+}
+} Light1;
 struct Pump{
   Button button;
 
   int pump_freq;
   int pump_duration;
+  String ControllerElement(String title , String inc_route , String dec_route , int value , String text) {
+  return "<div class='controler'><p class='general-text float'>" + title + " :</p> <a class='float' href='" + inc_route + "'><button type='btn' name='button' class='btn-controler general-text'>+</button></a> <p class='general-text float'>" + String(value) + " " + text + "</p> <a class='float' href='" + dec_route + "'><button type='btn' name='button' class='btn-controler general-text'>-</button></a></div>";
+  }
+  String PumpElement(Pump* pump) {
+
+
+  if (header.indexOf("GET /" + (*pump).button.route + "/dec/pumptime" ) >= 0) {
+    if ((*pump).pump_duration != 0) {
+      (*pump).pump_duration--;
+    }
+
+  }
+  else if (header.indexOf("GET /" + (*pump).button.route + "/inc/pumptime" ) >= 0) {
+    (*pump).pump_duration++;
+  }
+  else if (header.indexOf("GET /" + (*pump).button.route + "/dec/freq" ) >= 0) {
+    if ((*pump).pump_freq != 0) {
+      (*pump).pump_freq --;
+    }
+
+  }
+  else if (header.indexOf("GET /" + (*pump).button.route + "/inc/freq" ) >= 0) {
+    (*pump).pump_freq ++;
+  }
+
+  String HTML = "";
+  HTML = HTML +
+         (*pump).button.ToggleButtonElement(&((*pump).button)) +
+
+         "<div class='pump-info'>" +
+
+         ControllerElement("Once Every" , "/" + (*pump).button.route + "/inc/freq" , "/" + (*pump).button.route + "/dec/freq" , (*pump).pump_freq , "days") +
+         ControllerElement("Pump time" , "/" + (*pump).button.route + "/inc/pumptime" , "/" + (*pump).button.route + "/dec/pumptime" , (*pump).pump_duration , "seconds") +
+
+         "</div>";
+
+  return HTML;
+}
+
 } Pump1 , Pump2;
 
-
+int one_time = 1;
 
 
 void setup() {
+
 
   Light1.name = "Light1";
   Light1.route = "light1";
@@ -103,6 +172,13 @@ void setup() {
 }
 void loop() {
   WiFiClient client = server.available(); // Listen for incoming clients
+  if (one_time == 1){
+    one_time = 0;
+    String json = http_get_request("http://worldtimeapi.org","/api/timezone/Asia/Jerusalem" , client);
+    
+  }
+
+
 
   if (client) { // If a new client connects,
     Serial.println("New Client."); // print a message out in the serial port
@@ -166,79 +242,28 @@ void loop() {
   }
 }
 
-String ToggleButtonElement(Button* btn) {
 
 
-  String btn_next_state = "";
-  if (header.indexOf("GET /" + (*btn).route + "/on" ) >= 0) {
-    (*btn).state = "on";
-    digitalWrite((*btn).output_pin, HIGH);
-  }
-  else if (header.indexOf("GET /" + (*btn).route + "/off" ) >= 0) {
-    (*btn).state = "off";
-    digitalWrite((*btn).output_pin, LOW);
-  }
-
-  if ((*btn).state == "on") {
-    btn_next_state = "off";
-  }
-  else {
-    btn_next_state = "on";
-  }
-
-  return "<p><a href='/" + (*btn).route + "/" + btn_next_state + "'><button class='btn btn-" + (*btn).state + "'>" + (*btn).name + "</button></a></p>";
-}
-String PumpElement(Pump* pump) {
-
-
-  if (header.indexOf("GET /" + (*pump).button.route + "/dec/pumptime" ) >= 0) {
-    if ((*pump).pump_duration != 0) {
-      (*pump).pump_duration--;
-    }
-
-  }
-  else if (header.indexOf("GET /" + (*pump).button.route + "/inc/pumptime" ) >= 0) {
-    (*pump).pump_duration++;
-  }
-  else if (header.indexOf("GET /" + (*pump).button.route + "/dec/freq" ) >= 0) {
-    if ((*pump).pump_freq != 0) {
-      (*pump).pump_freq --;
-    }
-
-  }
-  else if (header.indexOf("GET /" + (*pump).button.route + "/inc/freq" ) >= 0) {
-    (*pump).pump_freq ++;
-  }
-
-  String HTML = "";
-  HTML = HTML +
-         ToggleButtonElement(&((*pump).button)) +
-
-         "<div class='pump-info'>" +
-
-         ControllerElement("Once Every" , "/" + (*pump).button.route + "/inc/freq" , "/" + (*pump).button.route + "/dec/freq" , (*pump).pump_freq , "days") +
-         ControllerElement("Pump time" , "/" + (*pump).button.route + "/inc/pumptime" , "/" + (*pump).button.route + "/dec/pumptime" , (*pump).pump_duration , "seconds") +
-
-         "</div>";
-
-  return HTML;
-}
 String Header(String h_level , String text) {
-  return "<h" + h_level + ">" + text + "</h" + h_level + ">";
+  return "<h" + h_level + " class='header'>" + text + "</h" + h_level + ">";
 }
-String ControllerElement(String title , String inc_route , String dec_route , int value , String text) {
-  return "<div class='controler'><p>" + title + " :</p> <a href='" + inc_route + "'><button type='btn' name='button'>+</button></a> <p>" + String(value) + " " + text + "</p> <a href='" + dec_route + "'><button type='btn' name='button'>-</button></a></div>";
-}
+
 String CSS() {
 
   String style = "";
   style = style +
           "<style>" +
-          ".btn{border-radius: 5px;font-size: 30px;width: 20rem;}" +
-          ".btn-on{background-color: yellow;}" +
-          ".btn-off{}" +
+          "body{background-color: #EFEFEF;}" +
+          ".header{font-size: 5rem;color: #277BC0;text-shadow: 2px 2px 5px black;}" +
+          ".btn{border-radius: 25px;border-width: thick;font-size: 30px;width: 100%;height: 12rem;}" +
+          ".btn-on{background-color: #3B9AE1;}" +
+          ".btn-off{background-color: #F1EFDC;box-shadow: 8px 8px 35px black;}" +
           ".buttns-container{border-width: medium;}" +
-          ".controler{display: inline-block;margin: 7px;}" +
+          ".pump-info{display: inline-block;}" +
+          ".controler{margin: 7px;}" +
+          ".float{display: inline-block;}" +
+          ".general-text{font-size: 2.5rem;color: black;}" +
+          ".btn-controler{width: 2.5rem; height: 2.5rem;}" +
           "</style>";
 
 
@@ -256,13 +281,13 @@ String HTML_BODY() {
          "<div class='buttns-container'>" +
 
          Header("2" , "Living Room") +
-         ToggleButtonElement(&Light1) +
+         Light1.ToggleButtonElement(&Light1) +
 
 
 
         Header("2" , "Plants") +
-        PumpElement(&Pump1) +
-        PumpElement(&Pump2) +
+        Pump1.PumpElement(&Pump1) +
+        Pump2.PumpElement(&Pump2) +
 
 
          "</div>" +
@@ -276,4 +301,22 @@ String HTML_BODY() {
 
 
 
+}
+
+String http_get_request(String endpoint , String route ,WiFiClient open_client){
+
+    String json;
+
+    String req = endpoint + route;
+    HTTPClient http;
+
+    http.useHTTP10(true);
+    http.begin(open_client , req);
+    http.GET();
+    json = http.getString();
+
+
+    http.end();
+
+    return json;
 }

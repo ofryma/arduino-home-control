@@ -7,43 +7,41 @@
   <body>
 
   <style>
-
-    .btn{
-      border-radius: 5px;
-      font-size: 30px;
-      width: 20rem;
-    }
-    .btn-on{
-      background-color: yellow;
-    }
-    .btn-off{
-
-    }
-    .buttns-container{
-      border-width: medium;
-    }
-    .controler{
-      display: inline-block;
-      margin: 7px;
-    }
-
+    body{background-color: #EFEFEF;}
+    .header{font-size: 5rem;color: #277BC0;text-shadow: 2px 2px 5px black;}
+    .btn{border-radius: 25px;border-width: thick;font-size: 30px;width: 100%;height: 12rem;}
+    .btn-on{background-color: #3B9AE1;}
+    .btn-off{background-color: #F1EFDC;box-shadow: 8px 8px 35px black;}
+    .buttons-container{border-width: medium;}
+    .pump-info{display: inline-block;}
+    .controler{margin: 7px;}
+    .float{display: inline-block;}
+    .general-text{font-size: 2.5rem;color: black;}
+    .btn-controler{width: 2.5rem; height: 2.5rem;}
   </style>
 
-  <div class="buttns-container">
-    <h2>Living Room</h2>
+  <div class="buttons-container">
+    <h2 class="header">Living Room</h2>
     <p><a href='/light/on\'><button class='btn btn-off'>Light</button></a></p>
     <p><a href='/3/on\'><button class='btn btn-off'>Room Light</button></a></p>
     <p><a href='/4/on\'><button class='btn btn-off'>Fan</button></a></p>
 
-    <h2>Plants</h2>
+    <h2 class="header">Plants</h2>
     <p><a href='/3/on\'><button class='btn btn-on'>Water Pump</button></a></p>
     <div class="pump-info">
       <div class="controler">
-        <p>Freq. :</p> <a href="/3/inc/freq\"><button type="btn" name="button">+</button></a> <p>1 times a day</p> <a href="/3/dec/freq\"><button type="btn" name="button">-</button></a>
+        <p class='general-text float'>Pump time : </p>
+        <a href="/3/inc/pumptime\" class='float'><button type="btn" name="button" class='btn-controler general-text'>+</button></a>
+        <p class='general-text float'>5 seconds</p>
+        <a href="/3/dec/pumptime\" class='float'><button type="btn" name="button" class='btn-controler general-text'>-</button></a>
       </div>
       <div class="controler">
-        <p>Pump time : </p> <a href="/3/inc/pumptime\"><button type="btn" name="button">+</button></a> <p>5 seconds</p> <a href="/3/dec/pumptime\"><button type="btn" name="button">-</button></a>
+        <p class='general-text float'>Pump time : </p>
+        <a href="/3/inc/pumptime\" class='float'><button type="btn" name="button" class='btn-controler general-text'>+</button></a>
+        <p class='general-text float'>5 seconds</p>
+        <a href="/3/dec/pumptime\" class='float'><button type="btn" name="button" class='btn-controler general-text'>-</button></a>
       </div>
+
     </div>
 
 
