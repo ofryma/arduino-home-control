@@ -34,15 +34,14 @@ unsigned long previousTime = 0;
 const long timeoutTime = 2000;
 
 
-String http_get_request(String endpoint , String route ,WiFiClient open_client);
+struct Clock{
 
-struct TimeStamp{
-
-};
+} clock;
 
 
 
 struct Button{
+
   String name;
   String route;
   String state;
@@ -70,10 +69,17 @@ struct Button{
 
   return "<p><a href='/" + (*btn).route + "/" + btn_next_state + "'><button class='btn general-text btn-" + (*btn).state + "'>" + (*btn).name + "</button></a></p>";
 }
+  void Initialize(String name , String route , String state , int output_pin , Button* btn){
+      (*btn).name = name;
+      (*btn).route = route;
+      (*btn).state = state;
+      (*btn).output_pin = output_pin;
+      pinMode(output_pin , OUTPUT);
+      digitalWrite(output_pin, LOW);
+  }
 } Light1;
 struct Pump{
   Button button;
-
   int pump_freq;
   int pump_duration;
   String ControllerElement(String title , String inc_route , String dec_route , int value , String text) {
@@ -114,7 +120,16 @@ struct Pump{
 
   return HTML;
 }
-
+  void Initialize(String name , String route , String state , int output_pin ,int pump_freq , int pump_duration , Pump* pump){
+    (*pump).button.name = name;
+    (*pump).button.route = route;
+    (*pump).button.state = state;
+    (*pump).button.output_pin = output_pin;
+    (*pump).pump_freq = pump_freq;
+    (*pump).pump_duration = pump_duration;
+    pinMode(output_pin , OUTPUT);
+    digitalWrite(output_pin, LOW);
+  }
 } Pump1 , Pump2;
 
 int one_time = 1;
@@ -122,36 +137,11 @@ int one_time = 1;
 
 void setup() {
 
-
-  Light1.name = "Light1";
-  Light1.route = "light1";
-  Light1.state = "off";
-  Light1.output_pin = D3;
-
-  Pump1.button.name = "Pump1";
-  Pump1.button.route = "pump1";
-  Pump1.button.state = "off";
-  Pump1.button.output_pin = D5;
-  Pump1.pump_freq = 1;
-  Pump1.pump_duration = 5;
-
-  Pump2.button.name = "Pump2";
-  Pump2.button.route = "pump2";
-  Pump2.button.state = "off";
-  Pump2.button.output_pin = D6;
-  Pump2.pump_freq = 1;
-  Pump2.pump_duration = 5;
-
   Serial.begin(115200);
-  // Initialize the output variables as outputs
-  pinMode(Light1.output_pin , OUTPUT);
-  pinMode(Pump1.button.output_pin , OUTPUT);
-  pinMode(Pump2.button.output_pin , OUTPUT);
 
-  // Set outputs to LOW
-  digitalWrite(Light1.output_pin, LOW);
-  digitalWrite(Pump1.button.output_pin, LOW);
-  digitalWrite(Pump2.button.output_pin, LOW);
+  Light1.Initialize("Light1", "light1" , "off" ,D3 , &Light1);
+  Pump1.Initialize("Pump1" , "pump1" , "off" ,D5 ,5 , 1 , &Pump1);
+  Pump2.Initialize("Pump2" , "pump2" , "off" ,D6 ,5 , 1 , &Pump2);
 
 
 
@@ -175,7 +165,7 @@ void loop() {
   if (one_time == 1){
     one_time = 0;
     String json = http_get_request("http://worldtimeapi.org","/api/timezone/Asia/Jerusalem" , client);
-    
+
   }
 
 
@@ -241,6 +231,7 @@ void loop() {
     Serial.println("");
   }
 }
+
 
 
 
