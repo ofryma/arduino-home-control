@@ -1,4 +1,4 @@
-#include <Arduino_JSON.h>
+#include <ArduinoJson.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 
@@ -34,11 +34,63 @@ unsigned long previousTime = 0;
 const long timeoutTime = 2000;
 
 
-struct Clock{
 
-} clock;
+int str2int(String str){
+  int i;
+  int value = 0;
+  int number = 0;
+  char v [] = {"0"};
+  int min_val = 48;
+  int max_val = 48 + 9;
+  for (i=0 ; i<sizeof(str)/sizeof(v[0]) ; i++){
+    
+    if (int(str[i]) >= min_val && int(str[i])<= max_val){
+      value = int(str[i]) - 48;
+      if( value >= 0 && value <= 9){
+        number = number * 10;
+        number = number + value;
+      }
+      
+    }
+  }
+  return number;
+}
 
+struct TimeStamp{
+ int day_of_year;
+ int day_of_week;
+ int week_number;
+ String datetime;
+ int ye;
+ int mo;
+ int da;
+ int ho;
+ int mi;
+ int se;
+ void get_time(TimeStamp* ts ,String json){
+    int last_year;
+    String date_time;
 
+    DynamicJsonDocument doc(1024);
+    deserializeJson(doc, json);
+    (*ts).day_of_year = doc["day_of_year"];
+    (*ts).day_of_week = doc["day_of_week"];
+    (*ts).day_of_week = doc["week_number"];
+    (*ts).datetime = String(doc["datetime"]);
+    
+    date_time = (*ts).datetime;
+    Serial.println(date_time);
+
+    (*ts).ye = str2int(String(date_time[0]) + String(date_time[1]) + String(date_time[2]) + String(date_time[3]));
+    
+    (*ts).mo = str2int(String(date_time[5]) + String(date_time[6]));
+    (*ts).da = str2int(String(date_time[8]) + String(date_time[9]));
+    (*ts).ho = str2int(String(date_time[11]) + String(date_time[12]));
+    (*ts).mi = str2int(String(date_time[14]) + String(date_time[15]));
+    (*ts).se = str2int(String(date_time[17]) + String(date_time[18]));
+ }
+
+} time_clock;
 
 struct Button{
 
@@ -82,6 +134,7 @@ struct Pump{
   Button button;
   int pump_freq;
   int pump_duration;
+  TimeStamp last_pump;
   String ControllerElement(String title , String inc_route , String dec_route , int value , String text) {
   return "<div class='controler'><p class='general-text float'>" + title + " :</p> <a class='float' href='" + inc_route + "'><button type='btn' name='button' class='btn-controler general-text'>+</button></a> <p class='general-text float'>" + String(value) + " " + text + "</p> <a class='float' href='" + dec_route + "'><button type='btn' name='button' class='btn-controler general-text'>-</button></a></div>";
   }
@@ -130,10 +183,21 @@ struct Pump{
     pinMode(output_pin , OUTPUT);
     digitalWrite(output_pin, LOW);
   }
+  void activate(Pump* pump){
+    digitalWrite((*pump).button.output_pin, HIGH);
+    Serial.println((*pump).button.name);
+    delay((*pump).pump_duration*1000);
+    Serial.println("finished!");
+    digitalWrite((*pump).button.output_pin, LOW);
+  }
+
 } Pump1 , Pump2;
 
-int one_time = 1;
+Pump* pumps [] = {&Pump1 , &Pump2};
 
+int one_time = 1;
+int counter = 0;
+int last_counter = 0;
 
 void setup() {
 
@@ -161,12 +225,27 @@ void setup() {
   server.begin();
 }
 void loop() {
+  
   WiFiClient client = server.available(); // Listen for incoming clients
   if (one_time == 1){
     one_time = 0;
-    String json = http_get_request("http://worldtimeapi.org","/api/timezone/Asia/Jerusalem" , client);
-
+    time_clock.get_time(&time_clock , http_get_request("http://worldtimeapi.org","/api/timezone/Asia/Jerusalem" , client));
+    checks(client);
   }
+
+
+//    every 10 min checks:
+    if (mins() < counter){
+      counter = mins();
+      last_counter = counter;
+    }
+    if(counter - last_counter >= 10){
+      last_counter = counter;
+      checks(client);
+    }else if(mins() > counter){
+      counter = mins();
+    }
+  
 
 
 
@@ -231,6 +310,8 @@ void loop() {
     Serial.println("");
   }
 }
+
+
 
 
 
@@ -310,4 +391,45 @@ String http_get_request(String endpoint , String route ,WiFiClient open_client){
     http.end();
 
     return json;
+}
+
+
+void checks(WiFiClient open_client){
+  checkPumps(open_client);
+}
+
+void checkPumps(WiFiClient open_client){
+
+  
+  int i=0;
+  time_clock.get_time(&time_clock , http_get_request("http://worldtimeapi.org","/api/timezone/Asia/Jerusalem" , open_client));
+  for (i=0 ; i < sizeof(pumps)/sizeof(Pump*); i++){
+      Serial.print((*pumps[i]).button.name);
+      Serial.print(" -> state: ");
+      Serial.print((*pumps[i]).button.state);
+      Serial.print(", ");
+      Serial.print( (*pumps[i]).pump_freq + (*pumps[i]).last_pump.day_of_year - time_clock.day_of_year);
+      Serial.println(" days to next pump");
+    if ((*pumps[i]).button.state == "off") {
+      continue;
+    }
+    if(time_clock.day_of_year - (*pumps[i]).pump_freq >= (*pumps[i]).last_pump.day_of_year){
+      
+      (*pumps[i]).last_pump.day_of_year = time_clock.day_of_year;
+      (*pumps[i]).activate(pumps[i]);
+    }
+    
+  }
+}
+
+
+
+int secs(){
+  return millis()/1000;
+}
+int mins(){
+  return secs()/60;
+}
+int hours(){
+  return mins()/60;
 }
