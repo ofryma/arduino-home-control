@@ -43,14 +43,14 @@ int str2int(String str){
   int min_val = 48;
   int max_val = 48 + 9;
   for (i=0 ; i<sizeof(str)/sizeof(v[0]) ; i++){
-    
+
     if (int(str[i]) >= min_val && int(str[i])<= max_val){
       value = int(str[i]) - 48;
       if( value >= 0 && value <= 9){
         number = number * 10;
         number = number + value;
       }
-      
+
     }
   }
   return number;
@@ -77,12 +77,12 @@ struct TimeStamp{
     (*ts).day_of_week = doc["day_of_week"];
     (*ts).day_of_week = doc["week_number"];
     (*ts).datetime = String(doc["datetime"]);
-    
+
     date_time = (*ts).datetime;
     Serial.println(date_time);
 
     (*ts).ye = str2int(String(date_time[0]) + String(date_time[1]) + String(date_time[2]) + String(date_time[3]));
-    
+
     (*ts).mo = str2int(String(date_time[5]) + String(date_time[6]));
     (*ts).da = str2int(String(date_time[8]) + String(date_time[9]));
     (*ts).ho = str2int(String(date_time[11]) + String(date_time[12]));
@@ -225,7 +225,7 @@ void setup() {
   server.begin();
 }
 void loop() {
-  
+
   WiFiClient client = server.available(); // Listen for incoming clients
   if (one_time == 1){
     one_time = 0;
@@ -245,7 +245,7 @@ void loop() {
     }else if(mins() > counter){
       counter = mins();
     }
-  
+
 
 
 
@@ -400,7 +400,7 @@ void checks(WiFiClient open_client){
 
 void checkPumps(WiFiClient open_client){
 
-  
+
   int i=0;
   time_clock.get_time(&time_clock , http_get_request("http://worldtimeapi.org","/api/timezone/Asia/Jerusalem" , open_client));
   for (i=0 ; i < sizeof(pumps)/sizeof(Pump*); i++){
@@ -414,11 +414,11 @@ void checkPumps(WiFiClient open_client){
       continue;
     }
     if(time_clock.day_of_year - (*pumps[i]).pump_freq >= (*pumps[i]).last_pump.day_of_year){
-      
+
       (*pumps[i]).last_pump.day_of_year = time_clock.day_of_year;
       (*pumps[i]).activate(pumps[i]);
     }
-    
+
   }
 }
 
